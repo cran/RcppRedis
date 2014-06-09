@@ -1,7 +1,26 @@
+2014-06-09  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Date): New release 0.1.1
+
+2014-05-30  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp (RCPP_MODULE): Added zcount
+
+2014-05-15  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Makevars.win: Updated for the Hiredis Windows library kindly
+	prepared by John Buonagurio
+
+	* DESCRIPTION (OS_type): With Windows support, remove OS_type: unix
+
+2014-05-14  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (OS_type): Add missing OS_type: unix
+
 2014-05-13  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION: Once more finalizing release 0.1.0
-	
+
 	* inst/hiredis.COPYING: Added per request of CRAN
 
 2014-05-12  Dirk Eddelbuettel  <edd@debian.org>
