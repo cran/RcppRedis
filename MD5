@@ -1,5 +1,5 @@
-bb58b9d54073b66e2040f349f9a41a07 *ChangeLog
-22426f398b28884f5490263ac8265f5a *DESCRIPTION
+b0107630496dd739bb1176beda72a58e *ChangeLog
+27a86d9d7d3c24e6f2eebcdc6e3bc27a *DESCRIPTION
 c03aa85c5642f625cc825d9cd9e00040 *NAMESPACE
 958f0fd237ffa423b3a05f013d7e0918 *R/RcppExports.R
 76bce1e52483f64206033d5be48509e6 *R/redis.R
@@ -14,7 +14,7 @@ bb95a855228e8892d9bb87abc47c6fef *demo/simDemo.R
 7cb7439885943f640e587288fdfe04b3 *demo/simpleBenchmark2.R
 4dc18fbf7bd23c82b5659fbf4b7b1d52 *demo/simpleRedisClient.R
 93d9c62ba3080855cdc98ca98bd66538 *demo/spDemo.R
-3deb2d5d523258f8b6e3893aec4f9cac *inst/NEWS.Rd
+4964a79c8f082d5a415bd799d0b3b1ec *inst/NEWS.Rd
 2b2fd9d10fd686a6e069c476336ca3f6 *inst/examples/readC++.cpp
 5acb3b8e80bf7cb07d7aca3cb3901a1b *inst/examples/readPython.py
 89338c2b7315bdd49baec1e812b42bf9 *inst/examples/readR.R
@@ -32,5 +32,5 @@ c43d10123c7a6aa4489b08c29f826463 *man/rhiredis.Rd
 de10cce61c7c26121ab4c87cc3f514d3 *src/Makevars.in
 d6bde83106bc8c11a5a95154f054baa9 *src/Makevars.win
 b3baab1a8ec6c36ff77cd59fa94030e0 *src/RcppExports.cpp
-1bbf1fd4659ce7fa72c2b413d2ffbd78 *src/Redis.cpp
+10742be23f1adc4258ce3ea713abf37a *src/Redis.cpp
 016061c98acd9bf18bc9656f282bc6ed *tests/runUnitTests.R
