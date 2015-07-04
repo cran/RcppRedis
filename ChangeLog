@@ -1,3 +1,26 @@
+2015-07-04  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION: New release 0.1.4
+
+2015-07-02  Dirk Eddelbuettel  <edd@debian.org>
+
+	* inst/tests/runit.basicRtests.R: No longer set tcp parameter
+	explicitly as rredis now deals with this
+
+	* man/rhiredis.Rd: Removed Redis site URL as curl fails to follow
+	redirect triggering a (spurious) CRAN testing complaint
+
+	* tests/runUnitTests.R: Minor edit to stopifnot(require())
+
+	* DESCRIPTION: Update to confirm with CRAN editing standards
+
+2015-04-08  Dirk Eddelbuettel  <edd@debian.org>
+
+	* README.md: Some small updates (including license shield) and edits
+
+	* .travis.yml (install): Minor updates adding ppa:edd/misc for
+	r-cran-rcpp and adding 'sudo: required' flag
+
 2014-12-10  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION: New release 0.1.3
@@ -11,6 +34,7 @@
 2014-11-06  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION: New release 0.1.2
+
 	* inst/NEWS: Ditto
 
 2014-11-05  Dirk Eddelbuettel  <edd@debian.org>

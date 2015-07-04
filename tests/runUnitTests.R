@@ -9,8 +9,8 @@
 ##
 ## Dirk Eddelbuettel, Jan - April 2014
 
-stopifnot(require(RUnit, quietly=TRUE))
-stopifnot(require(RcppRedis, quietly=TRUE))
+stopifnot(require("RUnit", quietly=TRUE))
+stopifnot(require("RcppRedis", quietly=TRUE))
 
 ## Set a seed to make the test deterministic
 set.seed(42)
@@ -24,7 +24,7 @@ testSuite <- defineTestSuite(name="RcppRedis Unit Tests",
 ## we cannot always assume one, so default to FALSE
 runTests <- FALSE
 
-## if we a redis server is set up, we can sigmal this -- cf .travis.yml
+## if we know a redis server is set up, we can signal this -- cf .travis.yml
 if (Sys.getenv("RunRcppRedisTests") == "yes") runTests <- TRUE
 
 ## here is a shortcut: if the user is 'edd' we also run tests
