@@ -1,8 +1,8 @@
 Package: RcppRedis
 Type: Package
 Title: 'Rcpp' Bindings for 'Redis' using the 'hiredis' Library
-Version: 0.1.4
-Date: 2015-07-04
+Version: 0.1.5
+Date: 2015-07-17
 Author: Dirk Eddelbuettel <edd@debian.org>
 Maintainer: Dirk Eddelbuettel <edd@debian.org>
 Description: Connection to the 'Redis' key/value store using the
@@ -15,6 +15,6 @@ Imports: methods, Rcpp (>= 0.11.0), RApiSerialize
 LinkingTo: Rcpp, RApiSerialize
 Suggests: rredis, RUnit
 NeedsCompilation: yes
-Packaged: 2015-07-04 08:42:11.663486 UTC; edd
+Packaged: 2015-07-17 12:00:39.941618 UTC; edd
 Repository: CRAN
-Date/Publication: 2015-07-04 15:40:01
+Date/Publication: 2015-07-17 14:45:59

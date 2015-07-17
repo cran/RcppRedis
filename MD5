@@ -1,9 +1,9 @@
-e13f2190e8237d8c2e956f661ef51128 *ChangeLog
-9ef2e43da81cde0511d715ef17fa7a84 *DESCRIPTION
+93c6ad88d7c3d11fb04b1858fa08652b *ChangeLog
+2e3bff5e481602afa3dab8be2956aa39 *DESCRIPTION
 c03aa85c5642f625cc825d9cd9e00040 *NAMESPACE
 958f0fd237ffa423b3a05f013d7e0918 *R/RcppExports.R
 76bce1e52483f64206033d5be48509e6 *R/redis.R
-83ee4a56f1c870ee2e20e55d39cf9ea5 *README.md
+4cc3f3c69f555f0af73c11bce3ba3470 *README.md
 0b8343d875eba46d0224d53ed0cf6f50 *cleanup
 494b63d55233c6df1243eb1260781a7d *configure
 eae2a9a5072ab51d0a05c1709404735d *configure.ac
@@ -25,7 +25,7 @@ bb95a855228e8892d9bb87abc47c6fef *demo/simDemo.R
 c124540d71aa7da9ac6e272364ece45c *inst/examples/writeR.R
 2fcb32c4618be7c93e3ce368555efb62 *inst/examples/writeShell.sh
 96e7adbef87a44f4bacc8862f189ba00 *inst/hiredis.COPYING
-571b8ffbd5623745cde307bec54a78e5 *inst/tests/runit.basicRtests.R
+86a668982b136f7f98770a81a635a56c *inst/tests/runit.basicRtests.R
 8a8381889b59b260ed52576df4b31999 *inst/tests/runit.execvTests.R
 15f8d6f5f1ee21072c341517f7c1c362 *inst/tests/runit.setTests.R
 784724b93dbe1af19ec293322cb06dbb *man/rhiredis.Rd
