@@ -1,3 +1,30 @@
+2015-10-05  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION: New release 0.1.6
+
+2015-10-04  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp: New ping command
+
+	* inst/tests/runit.basicRtests.R (test_05_ping): New test
+
+2015-10-03  Russell Pierce  <russell.s.pierce@gmail.com>
+
+	* src/Redis.cpp: lpush, rpush now return number of elements in list;
+	lpop and rpop still return the item from the list, but now return
+	null if empty; one more object free'ed at initialization
+
+	* inst/tests/runit.listTests.R: Added tests for list operations
+
+2015-10-03  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp: Minor editing to lpop et al addition
+
+2015-30-09  Russell Pierce  <russell.s.pierce@gmail.com>
+
+	* src/Redis.cpp: Add support for LPUSH, LPOP, RPUSH, RPOP; also
+	add additional constructor argument to be used for AUTH
+
 2015-07-17  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION: New release 0.1.5
