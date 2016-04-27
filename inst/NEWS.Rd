@@ -1,7 +1,29 @@
 \name{NEWS}
 \title{News for Package \pkg{RcppRedis}}
 \newcommand{\ghpr}{\href{https://github.com/eddelbuettel/rcppredis/pull/#1}{##1}}
-\newcommand{\ghit}{\href{https://github.com/eddelbuettel/Rcppredis/issue/#1}{##1}}
+\newcommand{\ghit}{\href{https://github.com/eddelbuettel/rcppredis/issues/#1}{##1}}
+
+\section{Changes in version 0.1.7 (2016-04-27)}{
+  \itemize{
+    \item Added support for \code{timeout} constructor argument (PR \ghpr{14} by
+    Russell Pierce)
+    \item Added new commands \code{exists}, \code{ltrim}, \code{expire} and
+    \code{pexpire} along with unit tests (PR \ghpr{16} by Russell
+    Pierce)
+    \item Return \code{NULL} for empty keys in serialized \code{get} for
+    consistency with \code{lpop} and \code{rpop} (also PR \ghpr{16} by Russell
+    Pierce)
+    \item Minor corrections to \code{get} code and \code{hget} and
+    \code{hset} documentation (also PR \ghpr{16} by Russell Pierce)
+    \item Error conditions are now properly forwarded as R errors (PR
+    \ghpr{22} by Russell Pierce) 
+    \item Results from Redis commands are now checked for \code{NULL} (PR
+    \ghpr{23} by Russell Pierce)
+    \item MessagePack encoding can now be used which requires
+    MessagePackage headers of version 1.0 or later; the (optional)
+    RcppMsgPack package can be used.
+  }
+}
 
 \section{Changes in version 0.1.6 (2015-10-05)}{
   \itemize{

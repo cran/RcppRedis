@@ -2,9 +2,10 @@
 //
 //  RcppRedis -- Rcpp bindings to Hiredis for some Redis functionality
 //
-//  Copyright (C) 2013 - 2015    Dirk Eddelbuettel 
+//  Copyright (C) 2013 - 2016    Dirk Eddelbuettel 
 //  Portions Copyright (C) 2013  Wush Wu
 //  Portions Copyright (C) 2013  William Pleasant
+//  Portions Copyright (C) 2015  Russell S. Pierce
 //
 //  This file is part of RcppRedis
 //
@@ -35,14 +36,21 @@
 //  
 // We do use 'binary' serialization for faster processing
 //
-// Dirk Eddelbuettel, 2013 - 2014
+// Dirk Eddelbuettel, 2013 - 2015
 
+// [[Rcpp::depends(BH)]]
 
 #include <Rcpp.h>
 #include <hiredis/hiredis.h>        // we check in configure for this
 
 #include <RApiSerializeAPI.h>   	// provides C API with serialization for R
+#include <sys/time.h>               // for struct timeval
 
+#include <boost/lexical_cast.hpp> 
+
+#ifdef HAVE_MSGPACK
+#include <msgpack.hpp>
+#endif
 
 // A simple and lightweight class -- with just a simple private member variable 
 // We could add some more member variables to cache the last call, status, ...
@@ -54,20 +62,51 @@ private:
     redisContext *prc_;                // private pointer to redis context
 
     // set up a connection to Redis on the given machine and port
-    void init(std::string host="127.0.0.1", int port=6379, std::string auth="")  { 
-        prc_ = redisConnect(host.c_str(), port);
+    void init(std::string host="127.0.0.1", int port=6379,
+              std::string auth="", double timeout=0.0)  {
+        if (timeout == 0.0) {   // icky float equality
+            prc_ = redisConnect(host.c_str(), port);
+        } else {
+            int second = static_cast<int>(timeout);
+            int microseconds = static_cast<int>(1000000*(timeout - second));
+            struct timeval timeoutStruct = { second, microseconds };
+            prc_ = redisConnectWithTimeout(host.c_str(), port, timeoutStruct);
+        }
         if (prc_->err) {
             Rcpp::stop(std::string("Redis connection error: ") + std::string(prc_->errstr));
         }
         if (auth != "") {
-            redisReply *reply = static_cast<redisReply*>(redisCommand(prc_, ("AUTH " + auth).c_str()));
+            redisReply *reply =
+                static_cast<redisReply*>(redisCommandNULLSafe(prc_, ("AUTH " + auth).c_str()));
             if (reply->type == REDIS_REPLY_ERROR) {
                 freeReplyObject(reply);
                 Rcpp::stop(std::string("Redis authentication error."));
-            } else {
-                freeReplyObject(reply);
             }
+            freeReplyObject(reply);
         }
+    }
+    
+    void nullReplyCheck(redisReply *reply) {
+        if (reply == NULL) {
+            Rcpp::stop("Recieved NULL reply; potential connection loss with Redis");
+        }
+    }
+    
+    void *redisCommandNULLSafe(redisContext *c, const char *format, ...) {
+        va_list myargs;
+        va_start(myargs, format);
+        
+        redisReply *reply = 
+            static_cast<redisReply*>(redisvCommand(c, format, myargs));
+        nullReplyCheck(reply);
+        return reply;
+    }
+    
+    void *redisCommandArgvNULLSafe(redisContext *c, int argc, const char **argv, const size_t *argvlen) {
+        redisReply *reply = 
+            static_cast<redisReply*>(redisCommandArgv(c, argc, argv, argvlen));
+        nullReplyCheck(reply);
+        return reply;
     }
 
     // This function was originally contributed by William Pleasant
@@ -76,8 +115,11 @@ private:
         switch(reply->type) {
         case REDIS_REPLY_STRING:
         case REDIS_REPLY_STATUS: 
-        case REDIS_REPLY_ERROR: {
             return Rcpp::wrap(std::string(reply->str));
+        case REDIS_REPLY_ERROR: {
+            std::string errorMessage = std::string(reply->str);
+            freeReplyObject(reply);
+            Rcpp::stop(errorMessage);
         }
         case REDIS_REPLY_INTEGER: {
             // cast to double to avoid INT_MAX overflow
@@ -96,7 +138,7 @@ private:
     }
     
     // for vector results (of any type), fill a list (as a list type can contain
-    // different basuc types and we switch later over these
+    // different basic types and we switch later over these
     Rcpp::List extract_array(redisReply *node) {
         Rcpp::List retlist(node->elements);
         for(unsigned int i = 0;i < node->elements;i++) {
@@ -141,11 +183,14 @@ private:
 
 public:
    
-    Redis(std::string host, int port, std::string auth)  { init(host, port, auth); }
-    Redis(std::string host, int port)                    { init(host, port);       }
-    Redis(std::string host)                              { init(host);             }
-    Redis()                                              { init();                 }
+    Redis(std::string host, int port, std::string auth, int timeout)  { init(host, port, auth, timeout); }
+    Redis(std::string host, int port, std::string auth)               { init(host, port, auth); }
+    Redis(std::string host, int port)                                 { init(host, port);       }
+    Redis(std::string host)                                           { init(host);             }
+    Redis()                                                           { init();                 }
 
+    // could create new functions to (re-)connect with given host and port etc pp
+    
     ~Redis() { 
         redisFree(prc_);
         prc_ = NULL;                // just to be on the safe side
@@ -153,7 +198,8 @@ public:
 
     // execute given string
     SEXP exec(std::string cmd) {
-        redisReply *reply = static_cast<redisReply*>(redisCommand(prc_, cmd.c_str()));
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, cmd.c_str()));
         SEXP rep = extract_reply(reply);
         freeReplyObject(reply);
         return(rep);
@@ -168,19 +214,36 @@ public:
         }
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommandArgv(prc_, cmd.size(), 
-                                                      &(cmdv[0]), &(cmdlen[0])));
+            static_cast<redisReply*>(redisCommandArgvNULLSafe(prc_, cmd.size(), 
+                                                              &(cmdv[0]), &(cmdlen[0])));
         SEXP rep = extract_reply(reply);
         freeReplyObject(reply);
         return(rep);
     }
 
     // redis ping -- see if server is alive and responding
-    std::string ping(void) {
-        redisReply *reply = static_cast<redisReply*>(redisCommand(prc_, "PING"));
-        std::string res(reply->str);
+    SEXP ping(void) {
+        redisReply *reply = static_cast<redisReply*>(redisCommandNULLSafe(prc_, "PING"));
+        SEXP rep = extract_reply(reply);
         freeReplyObject(reply);
-        return(res);
+        return(rep);
+    }
+  
+    // redis exists -- get the number of keys matching the request
+    SEXP exists(std::string key) {
+        return(exec("EXISTS " + key));
+    }
+  
+    // redis expire -- expire key after numeric seconds, use expire and round
+    SEXP expire(std::string key, double seconds) {
+        int i_seconds = (int)(seconds + 0.5);
+        return(exec("EXPIRE " + key + " " + boost::lexical_cast<std::string>(i_seconds)));
+    }
+  
+    // redis pexpire -- expire key after numeric milliseconds, use pexpire and round
+    SEXP pexpire(std::string key, double milliseconds) {
+        int i_milliseconds = (int)(milliseconds + 0.5);
+        return(exec("PEXPIRE " + key + " " + boost::lexical_cast<std::string>(i_milliseconds)));
     }
 
     // redis set -- serializes to R internal format
@@ -191,8 +254,8 @@ public:
 
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "SET %s %b", 
-                                                  key.c_str(), x.begin(), x.size()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "SET %s %b", 
+                                                          key.c_str(), x.begin(), x.size()));
         std::string res(reply->str);                                                
         freeReplyObject(reply);
         return(res);
@@ -200,19 +263,23 @@ public:
 
     // redis get -- deserializes from R format
     SEXP get(std::string key) {
-
+        SEXP obj;
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "GET %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "GET %s", key.c_str()));
 
-        int nc = reply->len;
-        Rcpp::RawVector res(nc);
-        memcpy(res.begin(), reply->str, nc);
+        if (replyTypeToInteger(reply) == replyNil_t) {
+            obj = R_NilValue;
+        } else {
+            int nc = reply->len;
+            Rcpp::RawVector res(nc);
+            memcpy(res.begin(), reply->str, nc);
+            obj = unserializeFromRaw(res);
+        }
         freeReplyObject(reply);
-        SEXP obj = unserializeFromRaw(res);
         return(obj);
     }
 
-    // redis set -- serializes to R internal format
+    // redis hset -- serializes to R internal format
     int hset(std::string key, std::string field, SEXP s) {
 
         // if raw, use as is else serialize to raw
@@ -220,7 +287,7 @@ public:
 
         // uses binary protocol, see hiredis doc at github
         redisReply *reply =
-            static_cast<redisReply*>(redisCommand(prc_, "HSET %s %s %b",
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HSET %s %s %b",
                                                   key.c_str(), field.c_str(), x.begin(), x.size()));
 
         checkReplyType(reply, replyInteger_t); // ensure we got integer
@@ -229,11 +296,12 @@ public:
         return(res);
     }
 
-    // redis get -- deserializes from R format
+    // redis hget -- deserializes from R format
     SEXP hget(std::string key, std::string field) {
 
         redisReply *reply =
-            static_cast<redisReply*>(redisCommand(prc_, "HGET %s %s", key.c_str(), field.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HGET %s %s",
+                                                          key.c_str(), field.c_str()));
 
         int nc = reply->len;
         Rcpp::RawVector res(nc);
@@ -252,7 +320,8 @@ public:
         size_t cmdlen[3] = {4, key.length(), static_cast<size_t>(x.size())};
 
         // uses binary protocol, see hiredis doc at github
-        redisReply *reply = static_cast<redisReply*>(redisCommandArgv(prc_, 3, cmdv, cmdlen));
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandArgvNULLSafe(prc_, 3, cmdv, cmdlen));
         SEXP rep = extract_reply(reply);
         freeReplyObject(reply);
         return(rep);
@@ -267,7 +336,8 @@ public:
         size_t cmdlen[3] = {4, key.length(), static_cast<size_t>(x.size())};
 
         // uses binary protocol, see hiredis doc at github
-        redisReply *reply = static_cast<redisReply*>(redisCommandArgv(prc_, 3, cmdv, cmdlen));
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandArgvNULLSafe(prc_, 3, cmdv, cmdlen));
         SEXP rep = extract_reply(reply);
         freeReplyObject(reply);
         return(rep);
@@ -277,7 +347,7 @@ public:
     Rcpp::List smembers(std::string key) {
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "SMEMBERS %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "SMEMBERS %s", key.c_str()));
 
         unsigned int len = reply->elements;
         Rcpp::List x(len);
@@ -297,7 +367,7 @@ public:
     SEXP keys(std::string regexp) {
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "KEYS %s", regexp.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "KEYS %s", regexp.c_str()));
 
         unsigned int nc = reply->elements;
         Rcpp::CharacterVector vec(nc);
@@ -308,18 +378,28 @@ public:
         return(vec);
     }
 
+    // redis ltrim: trim list so that it contains only the range of elements specified
+     SEXP ltrim(std::string key, int start, int end) {
+
+        redisReply *reply = 
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LTRIM %s %d %d", 
+                                                          key.c_str(), start, end));
+        SEXP rep = extract_reply(reply);
+        return(rep);
+    } 
+  
     // redis lrange: get list from start to end -- with R serialization
     Rcpp::List lrange(std::string key, int start, int end) {
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LRANGE %s %d %d", 
-                                                  key.c_str(), start, end));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LRANGE %s %d %d", 
+                                                          key.c_str(), start, end));
 
         unsigned int len = reply->elements;
-        Rcpp::Rcout << "Seeing " << len << " elements\n";
+        //Rcpp::Rcout << "Seeing " << len << " elements\n";
         Rcpp::List x(len);
         for (unsigned int i = 0; i < len; i++) {
-            Rcpp::Rcout << "  Seeing size " << reply->element[i]->len << "\n";
+            //Rcpp::Rcout << "  Seeing size " << reply->element[i]->len << "\n";
             int nc = reply->element[i]->len;
             Rcpp::RawVector res(nc);
             memcpy(res.begin(), reply->element[i]->str, nc);
@@ -331,8 +411,15 @@ public:
         return(x);
     }
 
-
-    // could create new functions to (re-)connect with given host and port etc pp
+    // redis llen: get list length
+    double llen(std::string key) {
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LLEN %s", key.c_str()));
+        checkReplyType(reply, replyInteger_t); // ensure we got int
+        double res = static_cast<double>(reply->integer); // a 'long long' would overflow int
+        freeReplyObject(reply);
+        return(res);
+    }
 
     // Some "R-serialization" functions below
     // redis "lpop from" -- with R serialization
@@ -341,7 +428,7 @@ public:
         std::string res;
         
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LPOP %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LPOP %s", key.c_str()));
 
         if (replyTypeToInteger(reply) == replyNil_t) {
             obj = R_NilValue;
@@ -361,7 +448,7 @@ public:
         SEXP obj;
         std::string res;
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "RPOP %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "RPOP %s", key.c_str()));
 
         if (replyTypeToInteger(reply) == replyNil_t) {
             obj = R_NilValue;
@@ -384,8 +471,9 @@ public:
       
       // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LPUSH %s %b", 
-                                                  key.c_str(), x.begin(), x.size()*szdb));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LPUSH %s %b", 
+                                                          key.c_str(), x.begin(),
+                                                          x.size()*szdb));
 
         
         SEXP rep = extract_reply(reply);
@@ -401,8 +489,9 @@ public:
       
       // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "RPUSH %s %b", 
-                                                  key.c_str(), x.begin(), x.size()*szdb));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "RPUSH %s %b", 
+                                                          key.c_str(), x.begin(),
+                                                          x.size()*szdb));
 
         SEXP rep = extract_reply(reply);
         freeReplyObject(reply);
@@ -418,8 +507,8 @@ public:
     // redis set a string without deserializes from R format [as set() above does]
     std::string setString(std::string key, std::string value) {
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "SET %s %s", 
-                                                  key.c_str(), value.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "SET %s %s", 
+                                                          key.c_str(), value.c_str()));
         std::string res(reply->str);
         freeReplyObject(reply);
         return(res);
@@ -428,7 +517,7 @@ public:
     // redis get a string without deserializes from R format [as get() above does]
     std::string getString(std::string key) {
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "GET %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "GET %s", key.c_str()));
         std::string res(reply->str);
         freeReplyObject(reply);
         return(res);
@@ -439,8 +528,9 @@ public:
     std::string setVector(std::string key, Rcpp::NumericVector x) {
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "SET %s %b", 
-                                                  key.c_str(), x.begin(), x.size()*szdb));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "SET %s %b", 
+                                                          key.c_str(), x.begin(),
+                                                          x.size()*szdb));
         std::string res(reply->str);                                                
         freeReplyObject(reply);
         return(res);
@@ -450,7 +540,7 @@ public:
     Rcpp::NumericVector getVector(std::string key) {
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "GET %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "GET %s", key.c_str()));
 
         int nc = reply->len;
         Rcpp::NumericVector x(nc/szdb);
@@ -466,8 +556,8 @@ public:
     Rcpp::List listRange(std::string key, int start, int end) {
 
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LRANGE %s %d %d", 
-                                                  key.c_str(), start, end));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LRANGE %s %d %d", 
+                                                          key.c_str(), start, end));
 
         //Rcpp::Rcout << "listRange got type: " << replyTypeToString(reply) << "\n";
         checkReplyType(reply, replyArray_t); // ensure we got array
@@ -500,7 +590,7 @@ public:
     // redis "lpop from" -- without R serialization
     std::string listLPop(std::string key) {
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LPOP %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LPOP %s", key.c_str()));
 
         std::string res;
         if (replyTypeToInteger(reply) == replyNil_t) {
@@ -519,8 +609,9 @@ public:
 
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LPUSH %s %b", 
-                                                  key.c_str(), x.begin(), x.size()*szdb));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LPUSH %s %b", 
+                                                          key.c_str(), x.begin(),
+                                                          x.size()*szdb));
 
         //std::string res(reply->str);                                                
         std::string res = "";
@@ -534,8 +625,9 @@ public:
 
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "RPUSH %s %b", 
-                                                  key.c_str(), x.begin(), x.size()*szdb));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "RPUSH %s %b", 
+                                                          key.c_str(), x.begin(),
+                                                          x.size()*szdb));
 
         //std::string res(reply->str);                                                
         std::string res = "";
@@ -553,10 +645,10 @@ public:
             Rcpp::NumericVector y = x.row(i);
             // uses binary protocol, see hiredis doc at github
             redisReply *reply = 
-                static_cast<redisReply*>(redisCommand(prc_, "ZADD %s %f %b", 
-                                                      key.c_str(), 
-                                                      y[0], 
-                                                      y.begin(), y.size()*szdb));
+                static_cast<redisReply*>(redisCommandNULLSafe(prc_, "ZADD %s %f %b", 
+                                                              key.c_str(), 
+                                                              y[0], 
+                                                              y.begin(), y.size()*szdb));
             checkReplyType(reply, replyInteger_t); // ensure we got array
             res += static_cast<double>(reply->integer); // a 'long long' would overflow int
             freeReplyObject(reply);
@@ -570,7 +662,7 @@ public:
         
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "ZRANGE %s %d %d", 
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "ZRANGE %s %d %d", 
                                                   key.c_str(), min, max));
         checkReplyType(reply, replyArray_t); // ensure we got array
         unsigned int rows = reply->elements;
@@ -591,9 +683,9 @@ public:
         
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, 
-                                                  "ZRANGEBYSCORE %s %f %f", 
-                                                  key.c_str(), min, max));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, 
+                                                          "ZRANGEBYSCORE %s %f %f", 
+                                                          key.c_str(), min, max));
         checkReplyType(reply, replyArray_t); // ensure we got array
         unsigned int rows = reply->elements;
         unsigned int cols = reply->element[0]->len; // assumes all row have same nb of cols
@@ -609,16 +701,22 @@ public:
     }
 
     // redis "zremrangebyscore" -- remove elements in [min, max] 
-    double zremrangebyscore(std::string key, double min, double max) {
-        
-        // uses binary protocol, see hiredis doc at github
-        redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, 
-                                                  "ZREMRANGEBYSCORE %s %f %f", 
-                                                  key.c_str(), min, max));
-        checkReplyType(reply, replyInteger_t); // ensure we got array
-        double res = static_cast<double>(reply->integer); // a 'long long' would overflow int
-        freeReplyObject(reply);
+    Rcpp::NumericVector zremrangebyscore(Rcpp::CharacterVector keyvec, double min, double max) {
+
+        int n = keyvec.size();
+        Rcpp::NumericVector res(n);
+        for (int i=0; i<n; i++) {
+            std::string key(keyvec[i]);
+            
+            // uses binary protocol, see hiredis doc at github
+            redisReply *reply = 
+                static_cast<redisReply*>(redisCommandNULLSafe(prc_, 
+                                                              "ZREMRANGEBYSCORE %s %f %f", 
+                                                              key.c_str(), min, max));
+            checkReplyType(reply, replyInteger_t); // ensure we got array
+            res[i] = static_cast<double>(reply->integer); // a 'long long' would overflow int
+            freeReplyObject(reply);
+        }
         return(res);
     }
 
@@ -627,8 +725,8 @@ public:
         
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, 
-                                                  "ZCARD %s", key.c_str()));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, 
+                                                          "ZCARD %s", key.c_str()));
         checkReplyType(reply, replyInteger_t); // ensure we got integer
         double res = static_cast<double>(reply->integer); // a 'long long' would overflow int
         freeReplyObject(reply);
@@ -638,9 +736,9 @@ public:
     // redis "zcount" -- counter members in set with scores in given range
     double zcount(std::string key, double min, double max) {
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, 
-                                                  "ZCOUNT %s %f %f", 
-                                                  key.c_str(), min, max));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, 
+                                                          "ZCOUNT %s %f %f", 
+                                                          key.c_str(), min, max));
         checkReplyType(reply, replyInteger_t); // ensure we got array
         double res = static_cast<double>(reply->integer); // a 'long long' would overflow int
         freeReplyObject(reply);
@@ -653,8 +751,8 @@ public:
 
         // uses binary protocol, see hiredis doc at github
         redisReply *reply = 
-            static_cast<redisReply*>(redisCommand(prc_, "LRANGE %s %d %d", 
-                                                  key.c_str(), start, end));
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LRANGE %s %d %d", 
+                                                          key.c_str(), start, end));
 
         //Rcpp::Rcout << "listRange got type: " << replyTypeToString(reply) << "\n";
         checkReplyType(reply, replyArray_t); // ensure we got array
@@ -668,7 +766,46 @@ public:
         return(x);
     }
 
+#ifdef HAVE_MSGPACK
+    Rcpp::NumericMatrix msgPackMatrix(std::string key, int start, int end) {
+        redisReply *reply = 
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LRANGE %s %d %d", 
+                                                          key.c_str(), start, end));
 
+        std::vector<double> row;
+        std::vector<std::vector<double> > vecs;
+        
+        checkReplyType(reply, replyArray_t); // ensure we got array
+        unsigned int rows = reply->elements;
+        
+        for (unsigned int i = 0; i < rows; i++) {
+            checkReplyType(reply->element[i], replyString_t); // ensure we got [binary] string 
+            //x[i] = reply->element[i]->str;
+            msgpack::unpacked result;
+            msgpack::unpack(result, (char*)reply->element[i]->str, reply->element[i]->len);
+
+            // deserialized object is valid during the msgpack::unpacked instance alive.
+            msgpack::object deserialized = result.get();
+
+            // msgpack::object supports ostream.
+            //Rcpp::Rcout << deserialized << std::endl;
+
+            deserialized.convert(&row);
+
+            vecs.push_back(row);
+        }
+        unsigned int cols = vecs[0].size();
+        Rcpp::NumericMatrix m(rows, cols);
+        for (unsigned int i=0; i<rows; i++) {
+            for (unsigned int j=0; j<cols; j++) {
+                m(i,j) = vecs[i][j];
+            }
+        }
+        freeReplyObject(reply);
+        return(m);
+
+    }
+#endif    
 };
 
 
@@ -679,11 +816,15 @@ RCPP_MODULE(Redis) {
         .constructor<std::string>("constructor with host port")  
         .constructor<std::string, int>("constructor with host and port")  
         .constructor<std::string, int, std::string>("constructor with host and port and auth")  
-
+        .constructor<std::string, int, std::string, int>("constructor with host and port, auth, and timeout")  
+        
         .method("exec", &Redis::exec,  "execute given redis command and arguments")
         .method("execv", &Redis::execv,  "execute given a vector of redis command and arguments")
 
         .method("ping", &Redis::ping,  "runs 'PING' command to test server state")
+        .method("exists", &Redis::exists,  "runs 'EXISTS' command to count the number of specified keys present")
+        .method("expire", &Redis::expire,  "runs 'EXPIRE' command to expire the key after a given number of seconds")
+        .method("pexpire", &Redis::pexpire,  "runs 'PEXPIRE' command to expire the key after a given number of milliseconds")
         .method("set",  &Redis::set,   "runs 'SET key object', serializes internally")
         .method("get",  &Redis::get,   "runs 'GET key', deserializes internally")
 
@@ -702,6 +843,8 @@ RCPP_MODULE(Redis) {
         .method("keys",     &Redis::keys,     "runs 'KEYS expr', returns character vector")
 
         .method("lrange",   &Redis::lrange,   "runs 'LRANGE key start end' for list")
+        .method("llen",     &Redis::llen,     "runs 'LLEN key' for list")
+        .method("ltrim",    &Redis::ltrim,    "runs 'LTRIM key start end' for list")
 
         // non-R serialization methods below
         .method("setString",  &Redis::setString,   "runs 'SET key obj' without serialization")
@@ -725,5 +868,9 @@ RCPP_MODULE(Redis) {
 
         .method("listRangeAsStrings",  &Redis::listRangeAsStrings,   "runs 'LRANGE key start end' for list, returns string vector")
 
+#ifdef HAVE_MSGPACK
+        .method("msgPackMatrix", &Redis::msgPackMatrix, "gets msgPack'ed data as Matrix")
+#endif
+        
     ;
 }

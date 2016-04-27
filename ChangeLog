@@ -1,3 +1,86 @@
+2016-04-27  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version): New release 0.1.7
+
+2016-04-24  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Suggests): Add RcppMsgPack
+	(Additional_repositories): Point to ghrr drat repo
+	(Version): Roll minor version
+
+	* configure.ac: Minor tweaks
+	* configure: Ditto
+
+2016-03-31  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION: Roll minor version to 0.1.6.5
+
+	* README.md: Mention RcppMsgPack for optional support
+
+2016-03-30  Dirk Eddelbuettel  <edd@debian.org>
+
+	* configure.ac: Check for RcppMsgPack and set the include path as
+	well as a define if found
+
+2016-03-28  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Description): Mention RcppMsgPack
+
+2016-03-23  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp: New llen() function to length of lists
+
+2016-02-12  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp (RCPP_MODULE): Basic MsgPack data getter,
+	currently #ifdef'ed out to not break Travis etc
+
+2015-11-23  Russell Pierce <russell.s.pierce@gmail.com>
+
+	* src/Redis.cpp: minor change to ping to use extract_reply
+
+	* inst/tests/runit.serverIssues.R: Checks both the AUTH code and the
+	ability to throw and R error rather than a segfault on loss of server
+
+	* src/Redis.cpp: Added nullReplyCheck, redisCommandNULLSafe, and
+	redisCommandArgvNULLSafe as internal functions to handle at least
+	some connection losses more gracefully (produce an R error rather
+	than a segfault); refactored throughout to use new functions
+
+	* src/Redis.cpp: exec and execv now pass errors forward from redis as
+	errors rather than text strings
+
+	* inst/tests/runit.execTests.R: add tests for exec
+	* inst/tests/runit.execvTests.R: add tests for execv error feature
+
+2015-11-22  Dirk Eddelbuettel  <edd@debian.org>
+
+	* .travis.yml: Add r-cran-bh, also add r-cran-rapiserialize (after
+	adding it to my PPA) and r-cran-rredis; all depends are in deb now
+
+2015-11-22  Russell Pierce <russell.s.pierce@gmail.com>
+
+	* src/Redis.cpp: Add support for exists
+	* src/Redis.cpp: Add support for ltrim
+	* src/Redis.cpp: Add support for expire
+	* src/Redis.cpp: Add support for pexpire
+	* src/Redis.cpp: Return NULL if key empty with serialized get for
+	consistency with lpop and rpop
+	* src/Redis.cpp: Removed extraneous free from get
+	* src/Redis.cpp: Minor correction to comments on hget and hset
+
+2015-10-15  Dirk Eddelbuettel  <edd@debian.org>
+
+	* inst/NEWS.Rd: Correct URL for GitHub issues
+
+2015-10-06  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp: Generalize timeout to fractional seconds
+
+2015-10-06  Russell Pierce  <russell.s.pierce@gmail.com>
+
+	* src/Redis.cpp: Add constructor arg for connecting with timeout
+
 2015-10-05  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION: New release 0.1.6
