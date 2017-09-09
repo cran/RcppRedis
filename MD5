@@ -1,11 +1,11 @@
-5c3e50b1d7e87e3f4161ec9a4925ee11 *ChangeLog
-8ad8f7d5d0b606ae928d713a0ea5d48d *DESCRIPTION
-c03aa85c5642f625cc825d9cd9e00040 *NAMESPACE
-76bce1e52483f64206033d5be48509e6 *R/redis.R
-0610b3994486d415e6bba982819afec7 *README.md
+0d7d8ff8577343907915469e40e398ad *ChangeLog
+55ed1266aa52b1ca5a8f59775d029d49 *DESCRIPTION
+4e33aed179cea8d8f160f8c46cc94d91 *NAMESPACE
+61b667232be772fdb78c6a1a469cb5fb *R/redis.R
+6b1b35f5817fe541c94fd574840cd1b2 *README.md
 0b8343d875eba46d0224d53ed0cf6f50 *cleanup
-10f5e67281e4254e60a5c391b4818bc9 *configure
-9a98852ba5687eb18b3ecb9d8fbeab86 *configure.ac
+64beddeff5ee79dadfa4ac16fb52ed51 *configure
+b2ec96c34bf3be110ed133a80bdd7aae *configure.ac
 03a04b495c9b80c59e4a718c3bdb01fc *demo/00Index
 81439c83d5ec574da3d066d491bd77a1 *demo/quickTest.R
 bb95a855228e8892d9bb87abc47c6fef *demo/simDemo.R
@@ -13,7 +13,7 @@ bb95a855228e8892d9bb87abc47c6fef *demo/simDemo.R
 7cb7439885943f640e587288fdfe04b3 *demo/simpleBenchmark2.R
 4dc18fbf7bd23c82b5659fbf4b7b1d52 *demo/simpleRedisClient.R
 93d9c62ba3080855cdc98ca98bd66538 *demo/spDemo.R
-b96d75c9702bc7268dd1c0f60d3abe86 *inst/NEWS.Rd
+780275bb8c9655c5b641ae819aacbc01 *inst/NEWS.Rd
 2b2fd9d10fd686a6e069c476336ca3f6 *inst/examples/readC++.cpp
 5acb3b8e80bf7cb07d7aca3cb3901a1b *inst/examples/readPython.py
 89338c2b7315bdd49baec1e812b42bf9 *inst/examples/readR.R
@@ -34,6 +34,7 @@ e5e72a950458e6b6363ddf43df3e08fa *inst/tests/runit.serverIssues.R
 15f8d6f5f1ee21072c341517f7c1c362 *inst/tests/runit.setTests.R
 784724b93dbe1af19ec293322cb06dbb *man/rhiredis.Rd
 ec50d086c02d67cfbb2eaca81f85593e *src/Makevars.in
-d6bde83106bc8c11a5a95154f054baa9 *src/Makevars.win
-5fcaf0b85d05126c6b36c9f7af0c3c4c *src/Redis.cpp
+6dd3d466fcdca297cd8897f6cead2aed *src/Makevars.win
+697c6969b6755339d4ee3fcde8180465 *src/Redis.cpp
+38ae72a591431e9fb8c25c1740d703d6 *src/init.c
 37f5579055fe20158bc103b33a07f135 *tests/runUnitTests.R

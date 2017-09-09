@@ -1,3 +1,38 @@
+2017-09-09  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Release 0.1.8
+
+	* src/Makevars.win: Set CXX_STD=CXX11 here too
+
+2017-09-08  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION: Remove 'Additional_repositories:
+	http://ghrr.github.io/drat' as RcppMsgPack is on CRAN
+
+	* configure.ac: Test for RcppMsgPack (>= 0.2.0)
+	* configure: Idem
+
+2017-09-04  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* src/Redis.cpp (R): Accomodate MsgPack 2.* and switch to
+	call-by-reference in two instances
+
+2017-08-26  Dirk Eddelbuettel  <edd@debian.org>
+
+	* .travis.yml: Update .travis.yml to use run.sh
+
+2017-04-09  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/init.c: (R_init_RcppRedis): Call R_registerRoutines()
+        and R_useDynamicSymbols()
+        * NAMESPACE: Use .registration=TRUE on useDynLib
+
+2017-04-06  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/Redis.cpp (msgPackZMatrix): New function
+
 2016-04-27  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION (Version): New release 0.1.7
