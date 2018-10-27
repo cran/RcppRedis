@@ -1,10 +1,9 @@
-## -*- mode: autoconf; autoconf-indentation: 4; -*-
 ##
 ##  RcppRedis configure.ac
 ##
 ##  RcppRedis -- R interface to Redis via Rcpp and hiredis
 ##
-##  Copyright (C) 2014 - 2017  Dirk Eddelbuettel 
+##  Copyright (C) 2014 - 2018  Dirk Eddelbuettel 
 ##
 ##  RcppRedis is free software: you can redistribute it and/or modify
 ##  it under the terms of the GNU General Public License as published by
@@ -23,14 +22,25 @@
 AC_PREREQ(2.61)
 
 # Process this file with autoconf to produce a configure script.
-AC_INIT([RcppRedis], [0.1.8])
+AC_INIT([RcppRedis], [0.1.9])
 
-# We are using C++
+# Ensure C++ is set up as R expects
+: ${R_HOME=`R RHOME`}
+if test -z "${R_HOME}"; then
+    AC_MSG_ERROR([Could not determine R_HOME.])   
+fi
+CXX=`"${R_HOME}/bin/R" CMD config CXX`
+CXXFLAGS=`"${R_HOME}/bin/R" CMD config CXXFLAGS`
 AC_LANG(C++)
 AC_REQUIRE_CPP
 AC_PROG_CXX
 
-## check for pkg-config
+## default to building from embedded sources ... unless hiredis found
+hiredis_libs=hiredis/libhiredis.a
+hiredis_tgt=libhiredis.a
+hiredis_cxxflags="-I."
+
+## ... but check for pkg-config
 AC_DEFUN([AC_PROG_PKGCONFIG], [AC_CHECK_PROG(PKGCONFIG,pkg-config,yes)])
 AC_PROG_PKGCONFIG
 
@@ -42,14 +52,11 @@ if test x"${PKGCONFIG}" == x"yes"; then
         ## obtain cflags and obtain libs
         hiredis_cxxflags=`pkg-config --cflags hiredis`
         hiredis_libs=`pkg-config --libs hiredis`
+        ## no need to build libhiredis.a
+        hiredis_tgt=""     
     else
-        hiredis_cxxflags=""
-        hiredis_libs="-lhiredis"
+        AC_MSG_WARN([pkg-config exists but hiredis is not available.])
     fi
-else
-    ## Add a reasonable default of -lhiredis if we don't have pkg-config
-    hiredis_cxxflags=""
-    hiredis_libs="-lhiredis"
 fi
 
 ## And make sure these flags are used for the tests below.
@@ -69,24 +76,21 @@ AC_CHECK_HEADER([$hiredis_header],,[
     AC_MSG_WARN([Unsetting $hiredis_header_cache_var])
     AS_UNSET([$hiredis_header_cache_var])
     AC_CHECK_HEADER([$hiredis_header],,
-    [AC_MSG_ERROR([ERROR: hiredis headers required; use '-Iincludedir' in CXXFLAGS for unusual locations.])])
+    [AC_MSG_WARN([hiredis headers not found.])])
 ])
 
 ## could check for minimal suitable version here
 
-## First, set R_HOME, respecting an environment variable if set 
-: ${R_HOME=$(R RHOME)}
-if test -z "${R_HOME}"; then
-    AC_MSG_ERROR([Could not determine R_HOME.])   
-fi
+## First, set R_HOME, respecting an environment variable if set (now above)
+#: ${R_HOME=$(R RHOME)}
+#if test -z "${R_HOME}"; then
+#    AC_MSG_ERROR([Could not determine R_HOME.])   
+#fi
 
 ## look for (optional !!) MsgPack headers
-## we need MsgPack > 1.0, and Debian/Ubuntu currently only have 0.5.7
-## "eventually" the MsgPack 1.4.0 package currently in experimental will get included
-## until then we use RcppMsgPack from the ghrr drat
+## RcppMsgPack on CRAN fits the bill -- but is a soft dependency
 AC_MSG_CHECKING([for RcppMsgPack])
-
-## Check if R has RcppMsgPack, and if so, of sufficient vintage
+## Check if R has RcppMsgPack
 $("${R_HOME}/bin/Rscript" --vanilla -e 'hasPkg <- "RcppMsgPack" %in% rownames(installed.packages()); q(save="no", status=if (hasPkg) packageVersion("RcppMsgPack") >= "0.2.0" else FALSE)')
 if test x"$?" == x"1"; then
     AC_MSG_RESULT([yes])
@@ -98,12 +102,19 @@ else
     AC_MSG_NOTICE([Install (optional) RcppMsgPack (>= 0.2.0) from CRAN via 'install.packages("RcppMsgPack")'])
 fi    
 
-
 ## now use all these
 AC_SUBST([PKG_CXXFLAGS],["${PKG_CXXFLAGS} $hiredis_cxxflags $msgpack_cxxflags"])
 AC_SUBST([PKG_LIBS],["${PKG_LIBS} $hiredis_libs"])
-#AC_SUBST([R_HOME],["${R_HOME}"])
+AC_SUBST([PKG_TARGET], [" $hiredis_tgt"])
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT
-#echo "Completed configuration and ready to build."
+
+echo "
+${PACKAGE_NAME} ${PACKAGE_VERSION}
+===============
+
+compiler flags: ${PKG_CXXFLAGS} 
+link argument:  ${PKG_LIBS}
+library target: ${PKG_TARGET}
+"
 

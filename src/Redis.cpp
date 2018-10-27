@@ -36,7 +36,7 @@
 //  
 // We do use 'binary' serialization for faster processing
 //
-// Dirk Eddelbuettel, 2013 - 2015
+// Dirk Eddelbuettel, 2013 - 2018
 
 // [[Rcpp::depends(BH)]]
 
@@ -309,6 +309,84 @@ public:
         freeReplyObject(reply);
         SEXP obj = unserializeFromRaw(res);
         return(obj);
+    }
+
+    // redis hexists -- returns int
+    int hexists(std::string key, std::string field) {
+
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HEXISTS %s %s",
+                                                          key.c_str(), field.c_str()));
+
+        checkReplyType(reply, replyInteger_t); // ensure we got integer
+        int res = reply->integer;
+        freeReplyObject(reply);
+        return(res);
+    }
+
+    // redis hdel -- returns int
+    int hdel(std::string key, std::string field) {
+
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HDEL %s %s",
+                                                          key.c_str(), field.c_str()));
+
+        checkReplyType(reply, replyInteger_t); // ensure we got integer
+        int res = reply->integer;
+        freeReplyObject(reply);
+        return(res);
+    }
+
+    // redis hlen -- returns int
+    int hlen(std::string key) {
+
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HLEN %s", key.c_str()));
+
+        checkReplyType(reply, replyInteger_t); // ensure we got integer
+        int res = reply->integer;
+        freeReplyObject(reply);
+        return(res);
+    }
+
+    // redis hkeys -- returns character vector
+    SEXP hkeys(std::string key) {
+
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HKEYS %s", key.c_str()));
+
+        unsigned int nc = reply->elements;
+        Rcpp::CharacterVector vec(nc);
+        for (unsigned int i = 0; i < nc; i++) {
+            vec[i] = reply->element[i]->str;
+        }
+        freeReplyObject(reply);
+        return(vec);
+    }
+
+    // redis hgetall -- returns a list
+    Rcpp::List hgetall(std::string key) {
+
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "HGETALL %s", key.c_str()));
+
+        unsigned int nc = reply->elements;
+        Rcpp::List vec(nc/2);
+        Rcpp::CharacterVector keys(nc/2);
+        // 0, 2, 4 are names, 1, 3, 5 are values
+        for (unsigned int i = 0; i < nc/2; i++) {
+            keys[i] = reply->element[i*2]->str;
+
+            int valueidx = i*2+1;
+            int vlen = reply->element[valueidx]->len;
+            Rcpp::RawVector res(vlen);
+            memcpy(res.begin(), reply->element[valueidx]->str, vlen);
+            SEXP obj = unserializeFromRaw(res);
+            vec[i] = obj;
+        }
+        vec.names() = keys;
+        freeReplyObject(reply);
+        return(vec);
     }
 
     // redis sadd -- serializes to R internal format
@@ -766,7 +844,7 @@ public:
         return(x);
     }
 
-#ifdef HAVE_MSGPACK
+#ifdef HAVE_MSGPACK    
     Rcpp::NumericMatrix msgPackMatrix(std::string key, int start, int end) {
         redisReply *reply = 
             static_cast<redisReply*>(redisCommandNULLSafe(prc_, "LRANGE %s %d %d", 
@@ -841,10 +919,9 @@ public:
         return(m);
 
     }
+#endif
     
-#endif    
 };
-
 
 RCPP_MODULE(Redis) {
     Rcpp::class_<Redis>("Redis")   
@@ -867,6 +944,11 @@ RCPP_MODULE(Redis) {
 
         .method("hset",  &Redis::hset,   "runs 'HSET key field object', serializes internally")
         .method("hget",  &Redis::hget,   "runs 'HGET key field', deserializes internally")
+        .method("hexists",  &Redis::hexists,   "runs 'HEXISTS key field', Integer reply, specifically: 1 if the hash contains field. 0 if the hash does not contain field, or key does not exist.")
+        .method("hdel", &Redis::hdel, "Delete one or more hash fields")
+        .method("hlen", &Redis::hlen, "Get the number of fields in a hash")
+        .method("hkeys", &Redis::hkeys, "Get all the fields in a hash")
+        .method("hgetall", &Redis::hgetall, "Get all the fields and values in a hash")
 
         .method("sadd",     &Redis::sadd,     "runs 'SADD key member', serializes internally")
         .method("srem",     &Redis::srem,     "runs 'SREM key member', serializes internally")
@@ -905,10 +987,9 @@ RCPP_MODULE(Redis) {
 
         .method("listRangeAsStrings",  &Redis::listRangeAsStrings,   "runs 'LRANGE key start end' for list, returns string vector")
 
-#ifdef HAVE_MSGPACK
+#ifdef HAVE_MSGPACK    
         .method("msgPackMatrix",  &Redis::msgPackMatrix,  "gets msgPack'ed data as Matrix")
         .method("msgPackZMatrix", &Redis::msgPackZMatrix, "gets msgPack'ed sorted set as Matrix")
-#endif
-        
+#endif        
     ;
 }

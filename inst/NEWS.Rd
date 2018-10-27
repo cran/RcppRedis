@@ -3,6 +3,21 @@
 \newcommand{\ghpr}{\href{https://github.com/eddelbuettel/rcppredis/pull/#1}{##1}}
 \newcommand{\ghit}{\href{https://github.com/eddelbuettel/rcppredis/issues/#1}{##1}}
 
+\section{Changes in version 0.1.9 (2018-10-27)}{
+  \itemize{
+    \item The \code{configure} setup is more robust with respect to the
+    C++ setup [CRAN request].
+    \item The Travis builds was updated to R 3.5 along with all others
+    (\ghpr{34}). 
+    \item A new Redis function \code{hexists} was added (Whit Armstrong
+    in \ghpr{35}).
+    \item The \pkg{hiredis} library source is now included, and built on 
+    all systems unwilling or unable to provide it (\ghpr{36}).
+    \item Added hash functions HDEL, HLEN, HKEYS, and HGETALL (Whit
+    Armstrong in \ghpr{38}).
+  }
+}
+
 \section{Changes in version 0.1.8 (2017-09-09)}{
   \itemize{
     \item A new file \code{init.c} was added with calls to
