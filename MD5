@@ -1,11 +1,11 @@
-fa7047eccecc0442b09dab44622ce94f *ChangeLog
-b258823fa196d146d62178fd096a29c8 *DESCRIPTION
+a670c912dd87673227c898f433c167e3 *ChangeLog
+2f028d90015a52934e83c0de37ad89e3 *DESCRIPTION
 80dddd0305b9c3570b15f590ab15930a *NAMESPACE
 61b667232be772fdb78c6a1a469cb5fb *R/redis.R
-472073e8246e2df5bbaa49801733ac35 *README.md
+99284ec0bb3b24256ba5f8e40132558b *README.md
 f3c71d0b0c42f79930acc27c2ea6b263 *cleanup
-04d7b2e1310a12eaffedc0eadf172c5b *configure
-5202f13e80df647e51b08850efb6fec9 *configure.ac
+165b06d99ae403e62d32e6b7cd4b64a1 *configure
+d430ee1bf205185b3c31c179e807477a *configure.ac
 03a04b495c9b80c59e4a718c3bdb01fc *demo/00Index
 81439c83d5ec574da3d066d491bd77a1 *demo/quickTest.R
 bb95a855228e8892d9bb87abc47c6fef *demo/simDemo.R
@@ -13,7 +13,7 @@ bb95a855228e8892d9bb87abc47c6fef *demo/simDemo.R
 7cb7439885943f640e587288fdfe04b3 *demo/simpleBenchmark2.R
 4dc18fbf7bd23c82b5659fbf4b7b1d52 *demo/simpleRedisClient.R
 93d9c62ba3080855cdc98ca98bd66538 *demo/spDemo.R
-353258ee1d1b7cb257cca74546798ab8 *inst/NEWS.Rd
+a55e1a246664efc2aa071891e53797ba *inst/NEWS.Rd
 2b2fd9d10fd686a6e069c476336ca3f6 *inst/examples/readC++.cpp
 5acb3b8e80bf7cb07d7aca3cb3901a1b *inst/examples/readPython.py
 89338c2b7315bdd49baec1e812b42bf9 *inst/examples/readR.R
@@ -35,8 +35,9 @@ c4fc0e9fb683e546d76d5d60ac9fd0c0 *inst/tinytest/test_server_issues.R
 a59833ec7126f203ff3f7e73dca591a1 *inst/tinytest/test_set.R
 784724b93dbe1af19ec293322cb06dbb *man/rhiredis.Rd
 23b49c35dee296baa66d9bc67e93bc83 *src/Makevars.in
-6dd3d466fcdca297cd8897f6cead2aed *src/Makevars.win
-0b1057bba9df2bf7e51bf38b3c71abdf *src/Redis.cpp
+2cec33791efd347cbcb051402d7cf9c4 *src/Makevars.ucrt
+2c35e2b86958d03734e0bac1acc8b3d9 *src/Makevars.win
+e17c8449d4812f0b91f66e165badf1ca *src/Redis.cpp
 d84d659a35c666d23233e54503aaea51 *src/hiredis/COPYING
 6677c44e4bc49c13959145599065aea9 *src/hiredis/Makefile
 7d3af2f5820d4b8153ac4024a6f89d86 *src/hiredis/async.c
@@ -55,3 +56,4 @@ b181b7074e4ffebf34b2b975079de7bc *src/hiredis/sds.h
 3a40b5be2bdc8be8ec11297f029100c6 *src/hiredis/sdsalloc.h
 38ae72a591431e9fb8c25c1740d703d6 *src/init.c
 63993b8261370aa8400efff0c5cb3afa *tests/tinytest.R
+814065600b623f92ab92ec4bce65991a *tools/winlibs.R
