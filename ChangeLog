@@ -1,3 +1,159 @@
+2022-03-08  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Release 0.2.0
+	* configure.ac: Idem
+	* configure: Regenerated
+
+	* src/Makevars.ucrt: Updated as suggested by Tomas
+
+2022-02-13  Dirk Eddelbuettel  <edd@debian.org>
+
+	* tests/pubsub.R: Make 'rredis' use conditional
+	* inst/tinytest/test_basics.R: Idem
+
+	* vignettes/redis-monitoring.pdf: More polish
+
+2022-02-12  Dirk Eddelbuettel  <edd@debian.org>
+
+	* vignettes/rcppredis-intro.pdf: More polish on vignette
+	* vignettes/redis-monitoring.pdf: Ditto
+
+2022-02-07  Dirk Eddelbuettel  <edd@debian.org>
+
+	* vignettes/redis-monitoring.pdf: Market Monitor Vignette
+	* vignettes/market-monitoring.Rnw: Sweave wrapper
+
+2022-02-05  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* vignettes/rcppredis-intro.pdf: Intro Vignette
+	* vignettes/rcppredis-introduction.Rnw: Sweave wrapper
+
+2022-02-03  Dirk Eddelbuettel  <edd@debian.org>
+
+	* vignettes/rmd/redis-intro.Rmd: First steps towards intro vignette
+
+2022-01-30  Dirk Eddelbuettel  <edd@debian.org>
+
+	* inst/examples/readPython.py: Updated
+	* inst/examples/writePython.py: Idem
+
+2022-01-28  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* inst/pubsub/intraday-GLOBEX-to-Redis.r: Add generalisation of
+	pub/sub example to handle multiple symbols at once in gatherer
+	* inst/pubsub/intraday-GLOBEX-from-Redis.r: Ditto for plotter
+
+	* inst/pubsub/pruneRedis.r: Generalize data pruner to multiple symbols
+
+	* inst/pubsub/README.md: Added brief paragraph on multi-symbol
+
+2022-01-14  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* src/hiredis/*: Updated to hiredis version 1.0.2
+
+2022-01-08  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* inst/pubsub/README.md: Describe pub/sub example
+	* inst/pubsub/intraday-ES-to-Redis.r: Collect and publish
+	* inst/pubsub/intraday-ES-from-Redis.r: Subscribe and plot
+	* inst/pubsub/pruneRedis.r: Shrinks history to last month
+	* inst/example_screenshot.png: Add screenshot
+
+2022-01-06  Bryan W. Lewis  <blewis@illposed.net>
+
+	* src/Redis.cpp: New methods publish, subscribe, psubscribe, listen
+	* R/redisMonitorChannels.Rd: Updated accordingly
+	* R/pubsub.R: Idem
+	* man/listen.Rd: Removed as function now part of module
+
+2022-01-05  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* src/Redis.cpp: Minor edit, removed one unused var, renamed getreply
+	to getReply for consistency
+	* R/pubsub.R: Use getReply(), minor whitespace edit
+
+	* README.md: Add Bryan to Authors here too
+	* inst/NEWS.md: Updated
+
+	* DESCRIPTION: Rever back to just GPL (>= 2)
+	* LICENSE: Idem
+
+	* .editorconfig: Added standard settings file
+	* .Rbuildignore: Idem
+
+2022-01-04  Bryan W. Lewis  <blewis@illposed.net>
+
+	* man/redisMonitorChannels.Rd: Improved minimal example
+	* man/listen.Rd: Idem
+
+2022-01-03  Bryan W. Lewis  <blewis@illposed.net>
+
+	* R/pubsub.R: Simplified yet improved direct pub/sub support
+	* src/Redis.cpp: Idem
+	* man/redisMonitorChannels.Rd: Idem
+	* man/listen.Rd: Idem
+
+	* src/init.c: Removed now unneeded more direct import from rredis
+	* src/libsock.c: Idem
+	* R/internal.R: Idem
+	* R/rredis-misc.R: Idem
+	* man/redisAuth.Rd: Idem
+	* man/redisClose.Rd: Idem
+	* man/redisCmd.Rd: Idem
+	* man/redisConnect.Rd: Idem
+	* man/redisPublish.Rd: Idem
+	* man/redisSubscribe.Rd: Idem
+	* man/redisUnsubscribe.Rd: Idem
+	* man/redisZAdd.Rd: Idem
+
+2021-12-31  Dirk Eddelbuettel  <edd@debian.org>
+
+	* src/libsock.c (_OPEN_FD, _SOCK_NAGLE): Register as symbols, but use
+	not-exported-by-default name starting with an underscore
+	* src/init.c: Idem
+
+2021-12-30  Dirk Eddelbuettel  <edd@debian.org>
+
+	* DESCRIPTION (Version, Date): Roll minor version
+
+	* R/pubsub.R: Imported from packaged 'rredis' to support pub/sub
+	* R/internal.R: Idem
+	* R/rredis-misc.R: Idem
+	* src/libsock.c: Idem
+	* man/redisPublish.Rd: Documentation for pub/sub and support
+	* man/redisSubscribe.Rd: Idem
+	* man/redisUnsubscribe.Rd: Idem
+	* man/redisMonitorChannels.Rd: Idem
+	* man/redisCmd.Rd: Idem
+        * man/redisAuth.Rd: Idem
+        * man/redisClose.Rd: Idem
+        * man/redisConnect.Rd: Idem
+        * man/redisZAdd.Rd: Idem
+	* tests/pubsub.R: Idem
+
+	* DESCRIPTION: Bryan Lewis is now a co-author of the package
+
+	* LICENSE: Added explicit license statement for added files which
+	remain under Apache License 2.0 while the remainder of the package
+	as well as the aggregation continues to be licensed under GPL (>= 2)
+
+	* src/Redis.cpp: Use C++11 instead of lexical_cast for double -> string
+	* DESCRIPTION: Remove LinkingTo: on BH
+
+2021-12-18  Dirk Eddelbuettel  <edd@debian.org>
+
+	* README.md: Remove unused continuous integration artifact and badge
+
 2021-06-26  Dirk Eddelbuettel  <edd@debian.org>
 
 	* DESCRIPTION (Version, Date): Release 0.1.11
@@ -556,4 +712,3 @@
 2013-07-22  Dirk Eddelbuettel  <edd@debian.org>
 
         * Initial version
-

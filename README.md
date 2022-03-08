@@ -1,6 +1,5 @@
 ## RcppRedis: RcppRedis is a Rcpp and hiredis-based Redis client for R 
 
-[![Build Status](https://travis-ci.org/eddelbuettel/rcppredis.svg)](https://travis-ci.org/eddelbuettel/rcppredis) 
 [![CI](https://github.com/eddelbuettel/rcppredis/workflows/ci/badge.svg)](https://github.com/eddelbuettel/rcppredis/actions?query=workflow%3Aci)
 [![License](http://img.shields.io/badge/license-GPL%20%28%3E=%202%29-brightgreen.svg?style=flat)](http://www.gnu.org/licenses/gpl-2.0.html) 
 [![CRAN](http://www.r-pkg.org/badges/version/RcppRedis)](https://cran.r-project.org/package=RcppRedis) 
@@ -53,10 +52,10 @@ This package was derived from an initial fork of an earlier attempt named
 ways. William Pleasant provided some early patches. Whit Armstrong and
 Russell Pierce contributed extensions.
 
-### Author
+### Authors
 
-Dirk Eddelbuettel, based on earlier work by Wush Wu and with contributions by
-William Pleasant, Russell Pierce and Whit Armstrong.
+Dirk Eddelbuettel and Bryan W. Lewis, based on earlier work by Wush Wu and
+with contributions by William Pleasant, Russell Pierce and Whit Armstrong.
 
 ### License
 

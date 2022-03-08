@@ -3,6 +3,20 @@
 \newcommand{\ghpr}{\href{https://github.com/eddelbuettel/rcppredis/pull/#1}{##1}}
 \newcommand{\ghit}{\href{https://github.com/eddelbuettel/rcppredis/issues/#1}{##1}}
 
+\section{Changes in version 0.2.0 (2022-03-08)}{
+  \itemize{
+    \item Two simple C++11 features remove needs for \pkg{BH} and
+    \code{lexical_cast()} (Dirk in \ghpr{45} addressing \ghit{44}).
+    \item Redis pub/sub is now supported (Dirk in \ghpr{43}, Bryan in \ghpr{46}).
+    \item Bryan Lewis is now a coauthor.
+    \item Added pub/sub examples for single and multiple Globex symbols.
+    \item The included hiredis sources have been updated to release 1.0.2.
+    \item Two vignettes have been added to introduce Redis and to described a live
+    market-monitoring application included in directory \code{pubsub/}.
+    \item The UCRT build was updated per a suggestion by Tomas.
+  }
+}
+
 \section{Changes in version 0.1.11 (2021-06-26)}{
   \itemize{
     \item The CI setup was updated to use \code{run.sh} from
@@ -26,10 +40,10 @@
     \item The \code{configure} setup is more robust with respect to the
     C++ setup [CRAN request].
     \item The Travis builds was updated to R 3.5 along with all others
-    (\ghpr{34}). 
+    (\ghpr{34}).
     \item A new Redis function \code{hexists} was added (Whit Armstrong
     in \ghpr{35}).
-    \item The \pkg{hiredis} library source is now included, and built on 
+    \item The \pkg{hiredis} library source is now included, and built on
     all systems unwilling or unable to provide it (\ghpr{36}).
     \item Added hash functions HDEL, HLEN, HKEYS, and HGETALL (Whit
     Armstrong in \ghpr{38}).
@@ -59,7 +73,7 @@
     \item Minor corrections to \code{get} code and \code{hget} and
     \code{hset} documentation (also PR \ghpr{16} by Russell Pierce)
     \item Error conditions are now properly forwarded as R errors (PR
-    \ghpr{22} by Russell Pierce) 
+    \ghpr{22} by Russell Pierce)
     \item Results from Redis commands are now checked for \code{NULL} (PR
     \ghpr{23} by Russell Pierce)
     \item MessagePack encoding can now be used which requires
@@ -103,7 +117,7 @@
     \item New commands \code{execv}, \code{hset}, \code{hget},
     \code{sadd}, \code{srem}, and \code{smembers} contributed by John
     Laing and Whit Armstrong over pull requests \ghpr{3} and \ghpr{4}.
-  } 
+  }
 }
 
 \section{Changes in version 0.1.1 (2014-06-09)}{
@@ -112,11 +126,11 @@
     of the hiredis library (created by John Buonagurio) at CRAN /
     win-builder (thanks to Uwe Ligges)
     \item Added support for new command \code{zcount}
-  } 
+  }
 }
 
 \section{Changes in version 0.1.0 (2014-05-10)}{
   \itemize{
     \item Initial CRAN upload
-  } 
+  }
 }

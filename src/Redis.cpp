@@ -1,11 +1,11 @@
-// -*- indent-tabs-mode: nil; tab-width: 4; c-indent-level: 4; c-basic-offset: 4; -*-
-//
+
 //  RcppRedis -- Rcpp bindings to Hiredis for some Redis functionality
 //
-//  Copyright (C) 2013 - 2021    Dirk Eddelbuettel
+//  Copyright (C) 2013 - 2022    Dirk Eddelbuettel
 //  Portions Copyright (C) 2013  Wush Wu
 //  Portions Copyright (C) 2013  William Pleasant
 //  Portions Copyright (C) 2015  Russell S. Pierce
+//  Portions Copyright (C) 2022  Bryan W. Lewis
 //
 //  This file is part of RcppRedis
 //
@@ -45,8 +45,6 @@
 
 #include <RApiSerializeAPI.h>   	// provides C API with serialization for R
 #include <sys/time.h>               // for struct timeval
-
-#include <boost/lexical_cast.hpp> 
 
 #ifdef HAVE_MSGPACK
 #include <msgpack.hpp>
@@ -236,14 +234,14 @@ public:
   
     // redis expire -- expire key after numeric seconds, use expire and round
     SEXP expire(std::string key, double seconds) {
-        int i_seconds = (int)(seconds + 0.5);
-        return(exec("EXPIRE " + key + " " + boost::lexical_cast<std::string>(i_seconds)));
+        std::string secs = std::to_string(static_cast<int32_t>(std::round(seconds)));
+        return(exec("EXPIRE " + key + " " + secs));
     }
   
     // redis pexpire -- expire key after numeric milliseconds, use pexpire and round
     SEXP pexpire(std::string key, double milliseconds) {
-        int i_milliseconds = (int)(milliseconds + 0.5);
-        return(exec("PEXPIRE " + key + " " + boost::lexical_cast<std::string>(i_milliseconds)));
+        std::string ms = std::to_string(static_cast<int32_t>(std::round(milliseconds)));
+        return(exec("EXPIRE " + key + " " + ms));
     }
 
     // redis set -- serializes to R internal format
@@ -929,6 +927,84 @@ public:
         return(rep);
     }
 
+    // cf. hiredis redisGetReply, blocking read of pub/sub message
+    SEXP listen(std::string type) {
+        redisReply *reply;
+        redisGetReply(prc_, (void **)&reply);
+
+        unsigned int nc = reply->elements;
+        Rcpp::List vec(nc);
+        for (unsigned int i = 0; i < nc; i++) {
+            if(i < 2) {
+                vec[i] = extract_reply(reply->element[i]);
+            } else
+            {
+              if(type == "string") {
+                  vec[i] = Rcpp::wrap(std::string(reply->element[i]->str));
+                  goto end;
+              }
+              int vlen = reply->element[i]->len;
+              Rcpp::RawVector res(vlen);
+              memcpy(res.begin(), reply->element[i]->str, vlen);
+              if(type == "raw") {
+                  vec[i] = res;
+              } else {
+                  vec[i] = unserializeFromRaw(res);
+              }
+            }
+        }
+end:
+        freeReplyObject(reply);
+        return(vec);
+    }
+
+    // redis subscribe to one or more channels
+    SEXP subscribe_proto(Rcpp::CharacterVector channels, const char * type) {
+
+        int n = channels.size();
+        Rcpp::List vec(n);
+        for (int i=0; i<n; i++) {
+            std::string key(channels[i]);
+            
+            redisReply *reply = 
+                static_cast<redisReply*>(redisCommandNULLSafe(prc_, 
+                                                              "%s %s", 
+                                                              type, key.c_str()));
+            vec[i] = extract_reply(reply);
+            freeReplyObject(reply);
+        }
+        return(vec);
+    }
+
+    SEXP subscribe(Rcpp::CharacterVector channels) {
+
+      return(subscribe_proto(channels, "SUBSCRIBE"));
+    }
+
+    SEXP psubscribe(Rcpp::CharacterVector channels) {
+
+      return(subscribe_proto(channels, "PSUBSCRIBE"));
+    }
+
+    SEXP unsubscribe(Rcpp::CharacterVector channels) {
+
+      return(subscribe_proto(channels, "UNSUBSCRIBE"));
+    }
+
+    // redis publish -- serializes to R internal format
+    SEXP publish(std::string channel, SEXP s) {
+
+        // if raw, use as is else serialize to raw
+        Rcpp::RawVector x = (TYPEOF(s) == RAWSXP) ? s : serializeToRaw(s);
+
+        // uses binary protocol, see hiredis doc at github
+        redisReply *reply =
+            static_cast<redisReply*>(redisCommandNULLSafe(prc_, "PUBLISH %s %b",
+                                                          channel.c_str(), x.begin(), x.size()));
+        SEXP rep = extract_reply(reply);
+        freeReplyObject(reply);
+        return(rep);
+    }
 
 };
 
@@ -997,6 +1073,12 @@ RCPP_MODULE(Redis) {
         .method("listRangeAsStrings",  &Redis::listRangeAsStrings,   "runs 'LRANGE key start end' for list, returns string vector")
 
         .method("quit", &Redis::quit,  "runs 'QUIT' to close connection")
+
+        .method("publish", &Redis::publish,  "runs 'PUBLISH channel message', serializes message internally")
+        .method("subscribe", &Redis::subscribe,  "runs 'SUBSCRIBE channel(s)', subscribe to one or more channels specified as a character vector")
+        .method("psubscribe", &Redis::subscribe,  "runs 'PSUBSCRIBE channel(s)', subscribe to one or more channel patterns specified as a character vector")
+        .method("unsubscribe", &Redis::subscribe,  "runs 'UNSUBSCRIBE channel(s)', unsubscribe one or more channels specified as a character vector")
+        .method("listen", &Redis::listen,  "listen for a redis pub/sub message (blocking)")
 
 #ifdef HAVE_MSGPACK    
         .method("msgPackMatrix",  &Redis::msgPackMatrix,  "gets msgPack'ed data as Matrix")
