@@ -1,10 +1,11 @@
 Package: RcppRedis
 Type: Package
 Title: 'Rcpp' Bindings for 'Redis' using the 'hiredis' Library
-Version: 0.2.4
-Date: 2023-08-19
-Author: Dirk Eddelbuettel and Bryan W. Lewis
-Maintainer: Dirk Eddelbuettel <edd@debian.org>
+Version: 0.2.5
+Date: 2025-03-26
+Authors@R: c(person("Dirk", "Eddelbuettel", role = c("aut", "cre"), email = "edd@debian.org",
+                    comment = c(ORCID = "0000-0001-6419-907X")),
+             person("Bryan", "Lewis", role = "aut", comment = "pub/sub code from 'rredis'"))
 Description: Connection to the 'Redis' key/value store using the
  C-language client library 'hiredis' (included as a fallback) with
  'MsgPack' encoding provided via 'RcppMsgPack' headers. It now also
@@ -20,10 +21,13 @@ URL: https://github.com/eddelbuettel/rcppredis,
         https://dirk.eddelbuettel.com/code/rcpp.redis.html
 BugReports: https://github.com/eddelbuettel/rcppredis/issues
 License: GPL (>= 2)
-Imports: methods, Rcpp (>= 0.11.0), RApiSerialize
+Imports: methods, Rcpp (>= 0.11.0), RApiSerialize (>= 0.1.4)
 LinkingTo: Rcpp, RApiSerialize
 Suggests: RcppMsgPack, tinytest
 NeedsCompilation: yes
-Packaged: 2023-08-19 12:40:53 UTC; edd
+Packaged: 2025-03-26 12:24:43 UTC; edd
+Author: Dirk Eddelbuettel [aut, cre] (<https://orcid.org/0000-0001-6419-907X>),
+  Bryan Lewis [aut] (pub/sub code from 'rredis')
+Maintainer: Dirk Eddelbuettel <edd@debian.org>
 Repository: CRAN
-Date/Publication: 2023-08-19 13:12:31 UTC
+Date/Publication: 2025-03-26 17:20:01 UTC
